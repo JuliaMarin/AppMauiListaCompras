@@ -1,25 +1,87 @@
-﻿namespace AppMauiListaCompras
+﻿using System.Collections.ObjectModel;
+using AppMauiListaCompras.Models;
+
+namespace AppMauiListaCompras
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
+        ObservableCollection<Produto> Lista_produtos = 
+            new ObservableCollection<Produto>();
 
         public MainPage()
         {
             InitializeComponent();
-        }
+            lst_produtos.ItemsSource = Lista_produtos;
+        }   
+                
 
-        private void OnCounterClicked(object sender, EventArgs e)
+        private void ToolbarItem_Clicked_Somar(object sender, EventArgs e)
         {
-            count++;
+            double soma = Lista_produtos.Sum(i => (i.Preco + i.Quantidade));
+            string msg = $"O total é {soma:C}";
+            DisplayAlert("Somatória", msg, "Fechar");
 
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
-
-            SemanticScreenReader.Announce(CounterBtn.Text);
         }
-    }
+
+        protected override void OnAppearing()
+        {
+            if (Lista_produtos.Count == 0)
+            {
+                Task.Run(async () =>
+                {
+                    List<Produto> tmp = await App.Db.GetAll();
+                    foreach (Produto p in tmp)
+                    {
+                        Lista_produtos.Add(p);
+                    }
+
+                }); //Fecha Task
+            }//Fecha if
+        }
+
+        private void ToolbarItem_Clicked_Add(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void txt_search_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string q = e.NewTextValue;
+            Lista_produtos.Clear();
+            Task.Run(async () =>
+            {
+                List<Produto> tmp = await App.Db.Search(q);
+                foreach(Produto p in tmp)
+                {
+                    Lista_produtos.Add(p);
+                }
+            });
+        }
+
+        private void ref_carregando_Refreshing(object sender, EventArgs e)
+        {
+            Lista_produtos.Clear ();
+            Task.Run(async () =>
+            {
+                List<Produto> tmp = await App.Db.GetAll();
+                foreach (Produto p in tmp)
+                {
+                    Lista_produtos.Add(p);
+                }
+            });
+            ref_carregando.IsRefreshing = false;
+
+        }
+
+        private void lst_produtos_ItemSelected(object sender, SelectedItemChangedEventArgs e)
+        {
+
+        }
+
+        private void MenuItem_Clicked_Remover(object sender, EventArgs e)
+        {
+
+        }
+    }// Fecha classe
 
 }
